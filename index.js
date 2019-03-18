@@ -61,8 +61,9 @@ server.get('/api/users/:id', (req, res) => {
 //====== POST REQUESTS ===== //
 
 server.post('/api/users', (req, res) => {
-  /*
-  POST REQUEST - If the request body is missing the name or bio property:
+  /* OK
+  POST REQUEST - When the client makes a POST request to /api/users
+  If the request body is missing the name or bio property:
     - cancel the request.
     - respond with HTTP status code 400 (Bad Request).
     - return the following JSON response: { errorMessage: "Please provide name and bio for the user." }. 
@@ -72,7 +73,8 @@ server.post('/api/users', (req, res) => {
     res.send({ errorMessage: 'Please provide name and bio for the user.' });
   } else {
     /*
-      POST REQUEST - If the information about the user is valid:
+====> POST REQUEST - When the client makes a POST request to /api/users
+      If the information about the user is valid:
         - save the new user the the database.
         - return HTTP status code 201 (Created).
         - return the newly created user document.
@@ -83,7 +85,7 @@ server.post('/api/users', (req, res) => {
         db.findById(id).then(user => res.json(user));
       })
 
-      /*
+      /* OK
         POST REQUEST - If there's an error while saving the user:
           - cancel the request.
           - respond with HTTP status code 500 (Server Error).
@@ -98,7 +100,7 @@ server.post('/api/users', (req, res) => {
 
 server.delete('/api/users/:id', (req, res) => {
   /*
-    DELETE REQUEST - When the client makes a DELETE request to /api/users/:id:
+=>DELETE REQUEST - When the client makes a DELETE request to /api/users/:id:
     If the user with the specified id is not found:
       - return HTTP status code 404 (Not Found).
       - return the following JSON object: { message: "The user with the specified ID does not exist." }.
@@ -108,11 +110,14 @@ server.delete('/api/users/:id', (req, res) => {
       if (!user) {
         res.status(404);
         res.send({ message: 'The user with the specified ID does not exist.' });
+      } else {
+        res.json(user);
       }
     })
 
     /*
-      DELETE REQUEST - If there's an error in removing the user from the database:
+ =>     DELETE REQUEST - When the client makes a DELETE request to /api/users/:id:
+      If there's an error in removing the user from the database:
         - cancel the request.
         - respond with HTTP status code 500.
         - return the following JSON object: { error: "The user could not be removed" }. 
@@ -124,7 +129,7 @@ server.delete('/api/users/:id', (req, res) => {
 });
 
 server.put('/api/users/:id', (req, res) => {
-  /*
+  /* OK
   PUT REQUEST - When the client makes a PUT request to /api/users/:id:
   If the request body is missing the name or bio property:
     - cancel the request.
@@ -135,20 +140,20 @@ server.put('/api/users/:id', (req, res) => {
     res.status(400);
     res.send({ errorMessage: 'Please provide name and bio for the user.' });
   } else {
-    /*
+    /* OK
     PUT REQUEST - When the client makes a PUT request to /api/users/:id:
     If the user with the specified id is not found:
       - return HTTP status code 404 (Not Found).
       - return the following JSON object: { message: "The user with the specified ID does not exist." }.
 */
-    db.update(id, req.body)
+    db.update(req.params.id, req.body)
       .then(user => {
         if (!user) {
           res.status(404);
           res.send({ message: 'The user with the specified ID does not exist.' });
         } else {
           /*
-        PUT REQUEST - When the client makes a PUT request to /api/users/:id:
+=>        PUT REQUEST - When the client makes a PUT request to /api/users/:id:
         If the user is found and the new information is valid:
           - update the user document in the database using the new information sent in the reques body.
           - return HTTP status code 200 (OK).
@@ -159,7 +164,7 @@ server.put('/api/users/:id', (req, res) => {
         }
       })
       .catch(() => {
-        /*
+        /* OK
       PUT REQUEST - When the client makes a PUT request to /api/users/:id:
       If there's an error when updating the user:
         - cancel the request.
