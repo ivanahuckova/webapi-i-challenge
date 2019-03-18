@@ -7,172 +7,84 @@ const port = 8000;
 
 server.use(express.json());
 
-//====== GET REQUESTS (OK)===== //
+//====== GET REQUESTS ===== //
 
 server.get('/api/users', (req, res) => {
   db.find()
-    .then(data => {
-      res.status(200);
-      res.json(data);
+    .then(user => {
+      res.json(user);
     })
-    /* 
-    GET REQUEST - When the client makes a GET request to /api/users:
-    If there's an error in retrieving the users from the database:
-      - cancel the request.
-      - respond with HTTP status code 500.
-      - return the following JSON object: { error: "The users information could not be retrieved." }.
-    */
     .catch(() => {
-      res.status(500);
-      res.send({ error: 'The users information could not be retrieved.' });
+      res.status(500).json({ error: 'The users information could not be retrieved.' });
     });
 });
 
 server.get('/api/users/:id', (req, res) => {
-  console.log(req.params.id);
   db.findById(req.params.id)
     .then(user => {
-      /* 
-        GET REQUEST - When the client makes a GET request to /api/users/:id:
-        If the user with the specified id is not found:
-          - return HTTP status code 404 (Not Found).
-          - return the following JSON object: { message: "The user with the specified ID does not exist." }.
-      */
       if (!user) {
-        res.status(404);
-        res.send({ message: 'The user with the specified ID does not exist.' });
+        res.status(404).json({ message: 'The user with the specified ID does not exist.' });
       } else {
         res.json(user);
       }
     })
-    /*
-      GET REQUEST - When the client makes a GET request to /api/users/:id:
-      If there's an error in retrieving the user from the database:
-        - cancel the request.
-        - respond with HTTP status code 500.
-        - return the following JSON object: { error: "The user information could not be retrieved." }. 
-    */
     .catch(() => {
-      res.status(500);
-      res.send({ error: 'The user information could not be retrieved.' });
+      res.status(500).json({ error: 'The user information could not be retrieved.' });
     });
 });
 
 //====== POST REQUESTS ===== //
 
 server.post('/api/users', (req, res) => {
-  /* OK
-  POST REQUEST - When the client makes a POST request to /api/users
-  If the request body is missing the name or bio property:
-    - cancel the request.
-    - respond with HTTP status code 400 (Bad Request).
-    - return the following JSON response: { errorMessage: "Please provide name and bio for the user." }. 
-  */
   if (!req.body.name || !req.body.bio) {
-    res.status(400);
-    res.send({ errorMessage: 'Please provide name and bio for the user.' });
+    res.status(400).json({ errorMessage: 'Please provide name and bio for the user.' });
   } else {
-    /*
-====> POST REQUEST - When the client makes a POST request to /api/users
-      If the information about the user is valid:
-        - save the new user the the database.
-        - return HTTP status code 201 (Created).
-        - return the newly created user document.
-    */
     db.insert(req.body)
-      .then(() => {
-        res.status(201);
-        db.findById(id).then(user => res.json(user));
+      .then(user => {
+        db.findById(user.id).then(user => {
+          res.status(201).json(user);
+        });
       })
-
-      /* OK
-        POST REQUEST - If there's an error while saving the user:
-          - cancel the request.
-          - respond with HTTP status code 500 (Server Error).
-          - return the following JSON object: { error: "There was an error while saving the user to the database" }.
-      */
       .catch(() => {
-        res.status(500);
-        res.send({ error: 'There was an error while saving the user to the database' });
+        res.status(500).json({ error: 'There was an error while saving the user to the database' });
       });
   }
 });
 
+//====== DELETE REQUESTS ===== //
+
 server.delete('/api/users/:id', (req, res) => {
-  /*
-=>DELETE REQUEST - When the client makes a DELETE request to /api/users/:id:
-    If the user with the specified id is not found:
-      - return HTTP status code 404 (Not Found).
-      - return the following JSON object: { message: "The user with the specified ID does not exist." }.
-*/
-  db.remove(req.body.id)
+  db.remove(req.params.id)
     .then(user => {
-      if (!user) {
+      if (user === 0) {
         res.status(404);
         res.send({ message: 'The user with the specified ID does not exist.' });
       } else {
-        res.json(user);
+        res.json({ message: `User with id ${req.params.id} was deleted` });
       }
     })
-
-    /*
- =>     DELETE REQUEST - When the client makes a DELETE request to /api/users/:id:
-      If there's an error in removing the user from the database:
-        - cancel the request.
-        - respond with HTTP status code 500.
-        - return the following JSON object: { error: "The user could not be removed" }. 
-    */
     .catch(() => {
       res.status(500);
       res.send({ error: 'The user could not be removed' });
     });
 });
 
+//====== PUT REQUESTS ===== //
+
 server.put('/api/users/:id', (req, res) => {
-  /* OK
-  PUT REQUEST - When the client makes a PUT request to /api/users/:id:
-  If the request body is missing the name or bio property:
-    - cancel the request.
-    - respond with HTTP status code 400 (Bad Request).
-    - return the following JSON response: { errorMessage: "Please provide name and bio for the user." }.
-  */
   if (!req.body.name || !req.body.bio) {
-    res.status(400);
-    res.send({ errorMessage: 'Please provide name and bio for the user.' });
+    res.status(400).json({ errorMessage: 'Please provide name and bio for the user.' });
   } else {
-    /* OK
-    PUT REQUEST - When the client makes a PUT request to /api/users/:id:
-    If the user with the specified id is not found:
-      - return HTTP status code 404 (Not Found).
-      - return the following JSON object: { message: "The user with the specified ID does not exist." }.
-*/
     db.update(req.params.id, req.body)
       .then(user => {
-        if (!user) {
-          res.status(404);
-          res.send({ message: 'The user with the specified ID does not exist.' });
+        if (user === 0) {
+          res.status(404).json({ message: 'The user with the specified ID does not exist.' });
         } else {
-          /*
-=>        PUT REQUEST - When the client makes a PUT request to /api/users/:id:
-        If the user is found and the new information is valid:
-          - update the user document in the database using the new information sent in the reques body.
-          - return HTTP status code 200 (OK).
-          - return the newly updated user document.
-        */
-          res.status(200);
-          res.json(user);
+          res.status(200).json({ message: `User with id ${req.params.id} was updated` });
         }
       })
       .catch(() => {
-        /* OK
-      PUT REQUEST - When the client makes a PUT request to /api/users/:id:
-      If there's an error when updating the user:
-        - cancel the request.
-        - respond with HTTP status code 500.
-        - return the following JSON object: { error: "The user information could not be modified." }.
-      */
-        res.status(500);
-        res.send({ error: 'The user information could not be modified.' });
+        res.status(500).json({ error: 'The user information could not be modified.' });
       });
   }
 });
